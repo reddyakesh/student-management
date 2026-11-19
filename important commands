@@ -1,0 +1,120 @@
+services: 
+  web:
+    image: wordpress:latest
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: user
+      WORDPRESS_DB_PASSWORD: admin
+      WORDPRESS_DB_NAME: demo_db
+    ports:
+      - "8081:80"
+    networks:
+      - app-net
+    depends_on:
+      - db
+
+  db:
+    image: mysql:8.0    
+    environment:
+      MYSQL_USER: user
+      MYSQL_PASSWORD: admin
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: demo_db
+    volumes:
+      - db-data:/var/lib/mysql
+      
+
+    networks:
+      - app-net
+
+
+networks:
+    app-net:
+
+volumes:
+    db-data:            
+
+
+
+
+services:
+  web:
+    image: nginx:latest
+    ports:
+      - "8081:80" 
+    networks: 
+      - app-net   
+    depends_on:
+      - db
+       
+
+
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: demo
+      POSTGRES_PASSWORD: demo
+      POSTGRES_DB: demo_db    
+    volumes:
+     - db-data:/var/lib/postgresql/data
+    networks: 
+     - app-net   
+
+  
+networks:
+  app-net:
+
+volumes: 
+  db-data:
+
+
+
+FROM tomcat:9.0
+
+COPY target/GymManagementSystem.war /usr/local/tomcat/webapps/ROOT.war
+
+EXPOSE 8080
+
+CMD ["catalina.sh", "run"]
+
+
+docker build -t gym-management:1.0 .
+
+
+minikube image load gym-management:1.0
+
+
+kubectl create deployment gym-app --image=gym-management:1.0 --replicas=2 --image-pull-policy=Never
+
+
+kubectl scale deployment gym-app --replicas=5
+
+
+kubectl expose deployment gym-app --type=NodePort --port=8080 --target-port=8080
+
+
+kubectl port-forward service/gym-app 8085:8080
+
+
+docker pull jasonrivers/nagios:latest
+
+docker start nagiosdemo
+
+
+docker run --name nagiosdemo -p 8888:80 jasonrivers/nagios:latest
+
+
+sudo apt update
+
+sudo apt-get install docker.io
+
+sudo apt install git
+
+sudo apt install nano
+
+FROM tomcat:9-jdk11
+FROM nginx:alpine
+
+COPY . /usr/share/nginx/html
+COPY target/*.war/usr/local/tomcat/webapps
